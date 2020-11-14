@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; background-color: rgb(130, 130, 199);}
+      form { 
+        background: rgb(83, 83, 83); 
+        padding: 1%; 
+        position: fixed; 
+        bottom: 0; 
+        max-width: 960px;
+        width: 100%;
+        height: 7vh;
+        }
+
+      form input { 
+        border: 0; 
+        padding: 1%; 
+        width: 80%; 
+        margin-right: 0.5%; 
+        }
+      
+      form button { 
+        width: 15%; 
+        background: rgb(130, 224, 255); 
+        border: none; 
+        margin-left: 3%;
+        padding: 1%;
+        }
+
+      #messages { list-style-type: none; margin: 0; padding: 0; overflow-y: scroll; overflow-wrap: break-word; height: 100%;}
+      #messages li { padding: 1% 2% ;}
+      #messages li:nth-child(odd) { background: rgb(254, 255, 174); }
+      .layoutflex{
+        max-width: 960px;
+        height: 93vh;
+        display: grid;
+        grid-template-columns: 70% 30%;
+        background-color:rgb(255, 222, 172);
+        grid-template-rows: 100%;
+        margin:auto;
+      }
+      .chatarea{
+        width: 100%;
+      }
+      .userdisplay{
+        background-color: rgb(228, 187, 187);
+        width: 100%;
+        padding: 4%;
+        border: #000;
+        
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layoutflex">
+      <div class="chatarea"> 
+        <ul id="messages"></ul>
+        <form action="">
+          <input id="m" autocomplete="off" /><button>Send</button>
+        </form>
+      </div>
+      <div class="userdisplay">
+        <h1> Current Users:</h1>
+        <br>
+        <ul id="userslist">
+        </ul>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+      $(function () {
+        var socket = io();
+        var user = 'none';
+        socket.emit('refresh', user);
+        $('form').submit(function(e){
+          e.preventDefault(); // prevents page reloading
+          console.log(user);
+          socket.emit('chat message', $('#m').val(), user);
+          $('#m').val('');
+          return false;
+        });
+
+        socket.on('chat message', function(timestamp, username, color, msg){
+          if(user == username){
+            $('#messages').append($('<li>').html(timestamp + ' - ' + "<span style='color:" + color + "'>" + username + "</span>: " + "<b>" + msg));
+            $('#messages').scrollTop($('#messages')[0].scrollHeight - $('#messages')[0].clientHeight);
+          } else {
+            $('#messages').append($('<li>').html(timestamp + ' - ' + "<span style='color:" + color + "'>" + username + "</span>: " + msg));
+            $('#messages').scrollTop($('#messages')[0].scrollHeight - $('#messages')[0].clientHeight);
+          }
+        });
+
+        socket.on('nameupdate', function(oldname, name) {
+          if(user === 'none' || user === oldname){
+            user = name;
+          }
+        });
+
+        socket.on('refresh userlist', function(userlist) {
+          $('#userslist').empty();
+          for(var x in userlist){
+            console.log(userlist[x]);
+            if(userlist[x] == user){
+              $('#userslist').append('<h3><b>' + userlist[x]);
+              $('#userslist').append('<br>');
+            } else {
+            $('#userslist').append('<h3>' + userlist[x]);
+            $('#userslist').append('<br>');
+            }
+          }
+        });
+
+        socket.on('clear messages', function() {
+          $('#messages').empty();
+        });
+        
+        
+      });
+    </script>
+    
+  </body>
+</html>
