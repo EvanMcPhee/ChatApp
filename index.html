@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Socket.IO chat</title>
+    <title> Evans Socket.IO chat</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font: 13px Helvetica, Arial; background-color: rgb(130, 130, 199);}
@@ -76,10 +76,9 @@
       $(function () {
         var socket = io();
         var user = 'none';
-        socket.emit('refresh', user);
+
         $('form').submit(function(e){
           e.preventDefault(); // prevents page reloading
-          console.log(user);
           socket.emit('chat message', $('#m').val(), user);
           $('#m').val('');
           return false;
@@ -104,12 +103,11 @@
         socket.on('refresh userlist', function(userlist) {
           $('#userslist').empty();
           for(var x in userlist){
-            console.log(userlist[x]);
             if(userlist[x] == user){
-              $('#userslist').append('<h3><b>' + userlist[x]);
+              $('#userslist').append('<h2><b>' + userlist[x] + '</h2></b>');
               $('#userslist').append('<br>');
             } else {
-            $('#userslist').append('<h3>' + userlist[x]);
+            $('#userslist').append('<h3>' + userlist[x] + '</h3>');
             $('#userslist').append('<br>');
             }
           }
@@ -118,7 +116,24 @@
         socket.on('clear messages', function() {
           $('#messages').empty();
         });
+
+        socket.on('update cookie', (name, color) =>{
+          if(user == name){
+            document.cookie = "username=" + name;
+            document.cookie = "color=" + color;
+          }
+        });
         
+        socket.on('any cookie', () =>{
+          try{
+              username = document.cookie.split('; ').find(row => row.startsWith('username')).split('=')[1];
+              color = document.cookie.split('; ').find(row => row.startsWith('color')).split('=')[1];
+              user = username;
+              socket.emit('got cookie', username, color);
+          } catch {
+            socket.emit('refresh', user);
+          }
+        });
         
       });
     </script>

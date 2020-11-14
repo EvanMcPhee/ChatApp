@@ -10,11 +10,12 @@ var userlistdict = {};
 var usertocolor = {};
 
 app.get('/', (req, res) => {
-    res.sendFile('__dirname' +'\\index.html');
+    res.sendFile('C:\\Users\\Evan\\Documents\\GitHub\\ChatApp\\index.html');
 });
 
 io.on('connection', (socket) => {
     months = ['Jan', 'Feb', 'Mar' , 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+    io.emit('any cookie');
 
     socket.on('chat message', (msg, user) => {
         if(msg.startsWith("/name ")){
@@ -37,6 +38,7 @@ io.on('connection', (socket) => {
 
                 io.emit('nameupdate', user, msgsplit[1]);
                 io.emit('refresh userlist', userlistdict);
+                io.emit('update cookie', msgsplit[1], usertocolor[msgsplit[1]]);
                 io.emit('clear messages');
 
                 for(i = 0; i < messages.length; i++){
@@ -53,6 +55,7 @@ io.on('connection', (socket) => {
             }
 
             io.emit('refresh userlist', userlistdict)
+            io.emit('update cookie', user, usertocolor[user]);
             io.emit('clear messages');
 
             for(i = 0; i < messages.length; i++){
@@ -77,10 +80,10 @@ io.on('connection', (socket) => {
             users += 1;
             userlistdict[socket.id] = user;
             usertocolor[user] = '#000000';
-            io.emit('refresh userlist', userlistdict)
+            io.emit('update cookie', user, usertocolor[user]);
         }
+        io.emit('refresh userlist', userlistdict)
         io.emit('clear messages');
-
         for(i = 0; i < messages.length; i++){
             io.emit('chat message', messages[i]['time'], messages[i]['user'], messages[i]['color'], messages[i]['message']);
         }
@@ -89,6 +92,17 @@ io.on('connection', (socket) => {
     socket.on('disconnect', ()=>{
         delete userlistdict[socket.id];
         io.emit('refresh userlist', userlistdict)
+    });
+
+    socket.on('got cookie', (user,color) => {
+        usertocolor[user] = color;
+        userlistdict[socket.id] = user;
+        io.emit('refresh userlist', userlistdict)
+        io.emit('clear messages');
+
+        for(i = 0; i < messages.length; i++){
+            io.emit('chat message', messages[i]['time'], messages[i]['user'], messages[i]['color'], messages[i]['message']);
+        }
     });
 
   });
